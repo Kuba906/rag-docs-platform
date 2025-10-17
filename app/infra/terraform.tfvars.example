@@ -1,0 +1,11 @@
+project  = "rag"
+env      = "dev"
+location = "westeurope"
+DIGEST=$(docker build -q -f app/docker/Dockerfile app | xargs docker inspect --format='{{index .RepoDigests 0}}' | cut -d'@' -f2)
+# container_app_image = "ragdevacr.azurecr.io/rag-docs-api@${DIGEST}"
+openai_endpoint      = "key"
+openai_api_key       = "endpoint"
+openai_deploy_chat   = "gpt-4o-mini"
+openai_deploy_embed  = "text-embedding-3-large"
+redis_sku  = "Basic"
+search_sku = "basic"
