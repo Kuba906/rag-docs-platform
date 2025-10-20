@@ -1,11 +1,29 @@
+# Project Configuration
 project  = "rag"
 env      = "dev"
 location = "westeurope"
-DIGEST=$(docker build -q -f app/docker/Dockerfile app | xargs docker inspect --format='{{index .RepoDigests 0}}' | cut -d'@' -f2)
+
+# Container App Configuration
+# To build and use your own image:
+# DIGEST=$(docker build -q -f app/docker/Dockerfile app | xargs docker inspect --format='{{index .RepoDigests 0}}' | cut -d'@' -f2)
 # container_app_image = "ragdevacr.azurecr.io/rag-docs-api@${DIGEST}"
-openai_endpoint      = "key"
-openai_api_key       = "endpoint"
-openai_deploy_chat   = "gpt-4o-mini"
-openai_deploy_embed  = "text-embedding-3-large"
-redis_sku  = "Basic"
+container_app_image = ""
+ingress_target_port = 8000
+
+# Azure OpenAI Configuration
+# Note: OpenAI resources are now created by Terraform - no need for manual endpoint/key!
+openai_sku                 = "S0"
+openai_deploy_chat         = "gpt-4o-mini"
+openai_deploy_embed        = "text-embedding-3-large"
+openai_chat_model_name     = "gpt-4o-mini"
+openai_chat_model_version  = "2024-07-18"
+openai_chat_capacity       = 10
+openai_embed_model_name    = "text-embedding-3-large"
+openai_embed_model_version = "1"
+openai_embed_capacity      = 10
+
+# Redis Configuration
+redis_sku = "Basic"
+
+# Azure Cognitive Search Configuration
 search_sku = "basic"
