@@ -4,7 +4,12 @@
       "Bash(cp:*)",
       "Bash(git rm:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nRemove tracked files that should be ignored\n\nRemoved sensitive and build files from Git tracking:\n- .env file (contains secrets)\n- Python __pycache__ directories and .pyc files\n- .DS_Store files (macOS metadata)\n\nThese files are now properly ignored via .gitignore.\nFiles remain in local filesystem but are no longer tracked.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nRemove tracked files that should be ignored\n\nRemoved sensitive and build files from Git tracking:\n- .env file (contains secrets)\n- Python __pycache__ directories and .pyc files\n- .DS_Store files (macOS metadata)\n\nThese files are now properly ignored via .gitignore.\nFiles remain in local filesystem but are no longer tracked.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash($env:TF_LOG=\"DEBUG\")",
+      "Bash(terraform plan:*)",
+      "Bash(Select-String -Pattern \"Error|Requesting|POST|GET\")",
+      "Bash(Select-Object -First 50)",
+      "Bash(az provider register:*)"
     ],
     "deny": [],
     "ask": []

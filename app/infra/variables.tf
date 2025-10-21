@@ -1,3 +1,9 @@
+variable "subscription_id" {
+  type        = string
+  description = "Azure subscription ID"
+  sensitive   = true
+}
+
 variable "project" {
   type        = string
   description = "Project name"

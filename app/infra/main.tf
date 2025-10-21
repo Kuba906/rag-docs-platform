@@ -5,8 +5,13 @@ resource "azurerm_resource_group" "rg" {
   location = var.location
 }
 
+resource "random_integer" "acr_suffix" {
+  min = 1000
+  max = 9999
+}
+
 resource "azurerm_container_registry" "acr" {
-  name                = replace(lower("${local.name_prefix}acr"), "-", "")
+  name                = replace(lower("${local.name_prefix}acr${random_integer.acr_suffix.result}"), "-", "")
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "Basic"
@@ -193,15 +198,15 @@ resource "azurerm_container_app" "api" {
 
       env {
         name        = "REDIS_URL"
-        secret_name = azurerm_key_vault_secret.redis_url.name
+        secret_name = "redis-url"
       }
       env {
         name        = "AZURE_OPENAI_API_KEY"
-        secret_name = azurerm_key_vault_secret.openai_key.name
+        secret_name = "azure-openai-api-key"
       }
       env {
         name        = "AZURE_SEARCH_API_KEY"
-        secret_name = azurerm_key_vault_secret.search_key.name
+        secret_name = "azure-search-api-key"
       }
     }
   }
@@ -218,17 +223,17 @@ resource "azurerm_container_app" "api" {
   }
 
   secret {
-    name                  = azurerm_key_vault_secret.openai_key.name
+    name                  = "azure-openai-api-key"
     identity              = "System"
     key_vault_secret_id   = azurerm_key_vault_secret.openai_key.id
   }
   secret {
-    name                  = azurerm_key_vault_secret.redis_url.name
+    name                  = "redis-url"
     identity              = "System"
     key_vault_secret_id   = azurerm_key_vault_secret.redis_url.id
   }
   secret {
-    name                  = azurerm_key_vault_secret.search_key.name
+    name                  = "azure-search-api-key"
     identity              = "System"
     key_vault_secret_id   = azurerm_key_vault_secret.search_key.id
   }
