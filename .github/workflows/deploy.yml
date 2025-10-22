@@ -21,6 +21,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Debug secrets (check if they exist)
+      run: |
+        echo "CLIENT_ID length: ${#AZURE_CLIENT_ID}"
+        echo "TENANT_ID length: ${#AZURE_TENANT_ID}"
+        echo "SUBSCRIPTION_ID length: ${#AZURE_SUBSCRIPTION_ID}"
+        echo "CLIENT_SECRET length: ${#AZURE_CLIENT_SECRET}"
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+
     - name: Log in to Azure
       uses: azure/login@v1
       with:
