@@ -4,7 +4,7 @@ from ingest.normalize import normalize
 from ingest.chunk import chunk_text
 from ingest.dedupe import chunk_hash
 from llm.embeddings import embed_chunks
-from vector.qdrant_client import upsert_chunks
+from vector.factory import upsert_chunks
 from core.config import settings
 import uuid
 
