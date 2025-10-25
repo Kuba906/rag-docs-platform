@@ -74,29 +74,10 @@ def create_index_if_not_exists() -> None:
 
     # Define index schema
     fields = [
-        SearchField(
-            name="id",
-            type=SearchFieldDataType.String,
-            key=True,
-            filterable=True
-        ),
-        SearchField(
-            name="tenant_id",
-            type=SearchFieldDataType.String,
-            filterable=True,
-            facetable=True
-        ),
-        SearchField(
-            name="file_id",
-            type=SearchFieldDataType.String,
-            filterable=True,
-            facetable=True
-        ),
-        SearchField(
-            name="text",
-            type=SearchFieldDataType.String,
-            searchable=True
-        ),
+        SearchField(name="id", type=SearchFieldDataType.String, key=True, filterable=True),
+        SearchField(name="tenant_id", type=SearchFieldDataType.String, filterable=True, facetable=True),
+        SearchField(name="file_id", type=SearchFieldDataType.String, filterable=True, facetable=True),
+        SearchField(name="text", type=SearchFieldDataType.String, searchable=True),
         SearchField(
             name="text_vector",
             type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
@@ -104,26 +85,10 @@ def create_index_if_not_exists() -> None:
             vector_search_dimensions=1536,
             vector_search_profile_name="vector-profile"
         ),
-        SearchField(
-            name="source",
-            type=SearchFieldDataType.String,
-            filterable=True
-        ),
-        SearchField(
-            name="hash",
-            type=SearchFieldDataType.String,
-            filterable=True
-        ),
-        SearchField(
-            name="page",
-            type=SearchFieldDataType.Int32,
-            filterable=True
-        ),
-        SearchField(
-            name="section",
-            type=SearchFieldDataType.String,
-            filterable=True
-        ),
+        SearchField(name="source", type=SearchFieldDataType.String, filterable=True),
+        SearchField(name="hash", type=SearchFieldDataType.String, filterable=True),
+        SearchField(name="page", type=SearchFieldDataType.Int32, filterable=True),
+        SearchField(name="section", type=SearchFieldDataType.String, filterable=True),
     ]
 
     # Configure vector search (HNSW algorithm for fast approximate search)
