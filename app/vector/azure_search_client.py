@@ -55,7 +55,7 @@ def create_index_if_not_exists() -> None:
     - tenant_id: for multi-tenancy filtering
     - file_id: source file name
     - text: the actual text content
-    - text_vector: embedding vector (1536 dimensions for text-embedding-3-large)
+    - text_vector: embedding vector (3072 dimensions for text-embedding-3-large)
     - source: source file name
     - hash: content hash for deduplication
     - page: optional page number
@@ -64,11 +64,18 @@ def create_index_if_not_exists() -> None:
     index_client = get_index_client()
     index_name = settings.AZURE_SEARCH_INDEX
 
-    # Check if index exists
+    # Check if index exists with correct dimensions
     try:
-        index_client.get_index(index_name)
-        logger.info(f"Index '{index_name}' already exists")
-        return
+        existing_index = index_client.get_index(index_name)
+        for field in existing_index.fields:
+            if field.name == "text_vector":
+                if field.vector_search_dimensions == 3072:
+                    logger.info(f"Index '{index_name}' already exists with correct dimensions")
+                    return
+                else:
+                    logger.warning(f"Index '{index_name}' has wrong dimensions ({field.vector_search_dimensions}), recreating...")
+                    index_client.delete_index(index_name)
+                    break
     except ResourceNotFoundError:
         logger.info(f"Index '{index_name}' not found, creating...")
 
@@ -82,7 +89,7 @@ def create_index_if_not_exists() -> None:
             name="text_vector",
             type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
             searchable=True,
-            vector_search_dimensions=1536,
+            vector_search_dimensions=3072,
             vector_search_profile_name="vector-profile"
         ),
         SearchField(name="source", type=SearchFieldDataType.String, filterable=True),
