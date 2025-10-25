@@ -1,8 +1,17 @@
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.indexes.models import (
+    SearchIndex,
+    SearchField,
+    SearchFieldDataType,
+    VectorSearch,
+    VectorSearchProfile,
+    HnswAlgorithmConfiguration,
+)
 from azure.search.documents.models import VectorizedQuery
 from azure.core.credentials import AzureKeyCredential
 from azure.identity import DefaultAzureCredential
+from azure.core.exceptions import ResourceNotFoundError
 from core.config import settings
 from typing import List, Dict, Any
 import logging
@@ -10,19 +19,151 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_search_client() -> SearchClient:
-    """Get Azure Search client with MSI or API key authentication."""
+def get_credential():
+    """Get Azure credential (API key or MSI)."""
     if settings.AZURE_SEARCH_USE_MSI:
-        credential = DefaultAzureCredential()
+        return DefaultAzureCredential()
     else:
         if not settings.AZURE_SEARCH_API_KEY:
             raise ValueError("AZURE_SEARCH_API_KEY is required when not using MSI")
-        credential = AzureKeyCredential(settings.AZURE_SEARCH_API_KEY)
+        return AzureKeyCredential(settings.AZURE_SEARCH_API_KEY)
 
+
+def get_search_client() -> SearchClient:
+    """Get Azure Search client with MSI or API key authentication."""
     return SearchClient(
         endpoint=settings.AZURE_SEARCH_ENDPOINT,
         index_name=settings.AZURE_SEARCH_INDEX,
-        credential=credential
+        credential=get_credential()
+    )
+
+
+def get_index_client() -> SearchIndexClient:
+    """Get Azure Search Index client for managing indexes."""
+    return SearchIndexClient(
+        endpoint=settings.AZURE_SEARCH_ENDPOINT,
+        credential=get_credential()
+    )
+
+
+def create_index_if_not_exists() -> None:
+    """
+    Create the Azure Search index if it doesn't exist.
+
+    Index schema:
+    - id: unique document ID
+    - tenant_id: for multi-tenancy filtering
+    - file_id: source file name
+    - text: the actual text content
+    - text_vector: embedding vector (1536 dimensions for text-embedding-3-large)
+    - source: source file name
+    - hash: content hash for deduplication
+    - page: optional page number
+    - section: optional section name
+    """
+    index_client = get_index_client()
+    index_name = settings.AZURE_SEARCH_INDEX
+
+    # Check if index exists
+    try:
+        index_client.get_index(index_name)
+        logger.info(f"Index '{index_name}' already exists")
+        return
+    except ResourceNotFoundError:
+        logger.info(f"Index '{index_name}' not found, creating...")
+
+    # Define index schema
+    fields = [
+        SearchField(
+            name="id",
+            type=SearchFieldDataType.String,
+            key=True,
+            filterable=True
+        ),
+        SearchField(
+            name="tenant_id",
+            type=SearchFieldDataType.String,
+            filterable=True,
+            facetable=True
+        ),
+        SearchField(
+            name="file_id",
+            type=SearchFieldDataType.String,
+            filterable=True,
+            facetable=True
+        ),
+        SearchField(
+            name="text",
+            type=SearchFieldDataType.String,
+            searchable=True
+        ),
+        SearchField(
+            name="text_vector",
+            type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+            searchable=True,
+            vector_search_dimensions=1536,
+            vector_search_profile_name="vector-profile"
+        ),
+        SearchField(
+            name="source",
+            type=SearchFieldDataType.String,
+            filterable=True
+        ),
+        SearchField(
+            name="hash",
+            type=SearchFieldDataType.String,
+            filterable=True
+        ),
+        SearchField(
+            name="page",
+            type=SearchFieldDataType.Int32,
+            filterable=True
+        ),
+        SearchField(
+            name="section",
+            type=SearchFieldDataType.String,
+            filterable=True
+        ),
+    ]
+
+    # Configure vector search (HNSW algorithm for fast approximate search)
+    vector_search = VectorSearch(
+        profiles=[
+            VectorSearchProfile(
+                name="vector-profile",
+                algorithm_configuration_name="hnsw-config"
+            )
+        ],
+        algorithms=[
+            HnswAlgorithmConfiguration(
+                name="hnsw-config",
+                parameters={
+                    "m": 4,  # Number of bi-directional links
+                    "efConstruction": 400,  # Size of dynamic candidate list for construction
+                    "efSearch": 500,  # Size of dynamic candidate list for search
+                    "metric": "cosine"  # Similarity metric
+                }
+            )
+        ]
+    )
+
+    # Create index
+    index = SearchIndex(
+        name=index_name,
+        fields=fields,
+        vector_search=vector_search
+    )
+
+    index_client.create_index(index)
+    logger.info(f"Created index '{index_name}' successfully")
+
+
+def get_search_client() -> SearchClient:
+    """Get Azure Search client with MSI or API key authentication."""
+    return SearchClient(
+        endpoint=settings.AZURE_SEARCH_ENDPOINT,
+        index_name=settings.AZURE_SEARCH_INDEX,
+        credential=get_credential()
     )
 
 
@@ -35,6 +176,9 @@ def upsert_chunks(chunks: List[Dict[str, Any]]) -> None:
     """
     if not settings.AZURE_SEARCH_ENDPOINT:
         raise ValueError("AZURE_SEARCH_ENDPOINT not configured")
+
+    # Ensure index exists before upserting
+    create_index_if_not_exists()
 
     client = get_search_client()
 
