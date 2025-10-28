@@ -150,7 +150,8 @@ def main():
         print("\nTasks that would be created:\n")
 
         for task in tasks:
-            print(f"  #{task['number']}: {task['title'].replace(f\"#{task['number']}: \", '')}")
+            task_title = task['title'].replace(f"#{task['number']}: ", "")
+            print(f"  #{task['number']}: {task_title}")
 
         print(f"\n💡 Alternatively, manually create issues using ROADMAP.md")
         return
