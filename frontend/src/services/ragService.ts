@@ -41,4 +41,5 @@ export class RagService {
   }
 }
 
+export const ragService = RagService;
 export default RagService;

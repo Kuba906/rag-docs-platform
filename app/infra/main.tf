@@ -83,12 +83,12 @@ resource "random_integer" "redis_suffix" {
   max = 9999
 }
 resource "azurerm_redis_cache" "redis" {
-  name                = "${local.name_prefix}-redis-${random_integer.redis_suffix.result}"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-  capacity            = 0
-  family              = "C"
-  sku_name            = var.redis_sku
+  name                 = "${local.name_prefix}-redis-${random_integer.redis_suffix.result}"
+  resource_group_name  = azurerm_resource_group.rg.name
+  location             = azurerm_resource_group.rg.location
+  capacity             = 0
+  family               = "C"
+  sku_name             = var.redis_sku
   non_ssl_port_enabled = false
 }
 
@@ -223,27 +223,27 @@ resource "azurerm_container_app" "api" {
   }
 
   secret {
-    name                  = "azure-openai-api-key"
-    identity              = "System"
-    key_vault_secret_id   = azurerm_key_vault_secret.openai_key.id
+    name                = "azure-openai-api-key"
+    identity            = "System"
+    key_vault_secret_id = azurerm_key_vault_secret.openai_key.id
   }
   secret {
-    name                  = "redis-url"
-    identity              = "System"
-    key_vault_secret_id   = azurerm_key_vault_secret.redis_url.id
+    name                = "redis-url"
+    identity            = "System"
+    key_vault_secret_id = azurerm_key_vault_secret.redis_url.id
   }
   secret {
-    name                  = "azure-search-api-key"
-    identity              = "System"
-    key_vault_secret_id   = azurerm_key_vault_secret.search_key.id
+    name                = "azure-search-api-key"
+    identity            = "System"
+    key_vault_secret_id = azurerm_key_vault_secret.search_key.id
   }
 }
 
 resource "azurerm_key_vault_access_policy" "api_mi_kv" {
-  key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = azurerm_container_app.api.identity[0].principal_id
-  secret_permissions = ["Get","List"]
+  key_vault_id       = azurerm_key_vault.kv.id
+  tenant_id          = data.azurerm_client_config.current.tenant_id
+  object_id          = azurerm_container_app.api.identity[0].principal_id
+  secret_permissions = ["Get", "List"]
 }
 
 resource "azurerm_role_assignment" "api_mi_search_contrib" {
