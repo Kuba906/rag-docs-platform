@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import RagService from './services/ragService';
 import { DocumentUpload } from './components/DocumentUpload';
-import { IngestResponse } from './types';
+import { SearchInput } from './components/SearchInput';
+import { SearchResults } from './components/SearchResults';
+import { IngestResponse, AskResponse } from './types';
 
 function App() {
   const [isHealthy, setIsHealthy] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadedDocuments, setUploadedDocuments] = useState<IngestResponse[]>([]);
+  const [searchResult, setSearchResult] = useState<AskResponse | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     checkApiHealth();
@@ -26,6 +31,22 @@ function App() {
 
   const handleUploadSuccess = (result: IngestResponse) => {
     setUploadedDocuments((prev) => [...prev, result]);
+  };
+
+  const handleSearch = async (query: string) => {
+    setIsSearching(true);
+    setHasSearched(true);
+    setSearchResult(null);
+
+    try {
+      const result = await RagService.askQuestion(query);
+      setSearchResult(result);
+    } catch (error) {
+      console.error('Search failed:', error);
+      setSearchResult(null);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -71,6 +92,23 @@ function App() {
             </div>
           </div>
 
+          {/* Search Interface */}
+          <div className="card mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">
+              Search Documents
+            </h2>
+            <SearchInput onSearch={handleSearch} isLoading={isSearching} />
+          </div>
+
+          {/* Search Results */}
+          <div className="card mb-8">
+            <SearchResults
+              result={searchResult}
+              isSearching={isSearching}
+              hasSearched={hasSearched}
+            />
+          </div>
+
           {/* Document Upload Section */}
           <div className="card mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">
@@ -95,15 +133,15 @@ function App() {
                   >
                     <div>
                       <p className="font-medium text-gray-800 dark:text-white">
-                        {doc.file_id}
+                        {doc.filename}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Tenant: {doc.tenant}
+                        File ID: {doc.file_id}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                        {doc.chunks} chunks
+                        {doc.chunks_count} chunks
                       </p>
                     </div>
                   </div>
