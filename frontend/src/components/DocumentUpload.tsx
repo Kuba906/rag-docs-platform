@@ -9,7 +9,7 @@ const ALLOWED_FILE_TYPES = {
 };
 
 interface DocumentUploadProps {
-  onUploadSuccess?: (result: { tenant: string; file_id: string; chunks: number }) => void;
+  onUploadSuccess?: (result: { message: string; file_id: string; chunks_count: number; filename: string }) => void;
   onUploadError?: (error: string) => void;
 }
 
@@ -79,7 +79,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
       showNotification(
         'success',
-        `Successfully uploaded ${file.name}. Created ${result.chunks} chunks.`
+        `Successfully uploaded ${file.name}. Created ${result.chunks_count} chunks.`
       );
 
       if (onUploadSuccess) {
