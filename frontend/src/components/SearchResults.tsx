@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { AskResponse } from '../types';
 
 interface SearchResultsProps {
@@ -11,6 +13,23 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   isSearching,
   hasSearched,
 }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyToClipboard = async () => {
+    if (!result?.answer) return;
+    try {
+      await navigator.clipboard.writeText(result.answer);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+  };
+
+  const formatTimestamp = (ts: string) => {
+    const date = new Date(ts);
+    return date.toLocaleString();
+  };
   // Empty state - no search performed yet
   if (!hasSearched && !isSearching) {
     return (
@@ -117,53 +136,101 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
     <div className="space-y-6">
       {/* Answer Section */}
       <div className="card">
-        <div className="flex items-start gap-3 mb-4">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-blue-600 dark:text-blue-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-              />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+        {/* Header with title, confidence badge, and copy button */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-blue-600 dark:text-blue-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
               Answer
             </h3>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-              {result.answer}
-            </p>
             {result.confidence !== undefined && (
-              <div className="mt-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Confidence:</span>
-                  <div className="flex-1 max-w-xs bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        result.confidence > 0.7
-                          ? 'bg-green-500'
-                          : result.confidence > 0.4
-                          ? 'bg-yellow-500'
-                          : 'bg-red-500'
-                      }`}
-                      style={{ width: `${result.confidence * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {Math.round(result.confidence * 100)}%
-                  </span>
-                </div>
-              </div>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  result.confidence >= 0.8
+                    ? 'bg-green-100 text-green-800'
+                    : result.confidence >= 0.5
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {result.confidence >= 0.8 ? 'High' : result.confidence >= 0.5 ? 'Medium' : 'Low'} Confidence ({Math.round(result.confidence * 100)}%)
+              </span>
             )}
           </div>
+          <button
+            onClick={handleCopyToClipboard}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+            title="Copy to clipboard"
+          >
+            {copied ? (
+              <>
+                <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Copied!</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Copy</span>
+              </>
+            )}
+          </button>
         </div>
+
+        {/* Answer content with markdown support */}
+        <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+          <ReactMarkdown>{result.answer}</ReactMarkdown>
+        </div>
+
+        {/* Confidence bar */}
+        {result.confidence !== undefined && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Confidence:</span>
+              <div className="flex-1 max-w-xs bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full ${
+                    result.confidence > 0.7
+                      ? 'bg-green-500'
+                      : result.confidence > 0.4
+                      ? 'bg-yellow-500'
+                      : 'bg-red-500'
+                  }`}
+                  style={{ width: `${result.confidence * 100}%` }}
+                />
+              </div>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {Math.round(result.confidence * 100)}%
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Timestamp */}
+        {result.timestamp && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Generated at: {formatTimestamp(result.timestamp)}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Sources Section */}
